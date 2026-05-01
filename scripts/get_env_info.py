@@ -80,7 +80,7 @@ def log_environment():
     )
 
     # 要望により sudo パスワード待ち問題は一旦無視
-    power_mode = get_sys_info("sudo nvpmodel -q", timeout=5)
+    power_mode = get_sys_info("sudo nvpmodel -q", timeout=20)
 
     info = {
         "Timestamp": timestamp,
@@ -102,13 +102,13 @@ def log_environment():
     saved_path = save_report(report_text, timestamp_for_file)
 
     if not is_maxn_mode(power_mode):
-        print("[WARNING] 電源モードが MAXN ではない可能性があります。")
-        print("          必要なら `sudo nvpmodel -m 0` を実行してください。")
+        print("[WARNING] Power mode may not be MAXN")
+        print("          If needed, run: sudo nvpmodel -m 0")
 
     if saved_path is not None:
         print(f"Environment info saved to: {saved_path}")
     else:
-        print("SAVE_MODE='print': ファイル保存はしていません。")
+        print("SAVE_MODE='print': no file was saved.")
 
 
 if __name__ == "__main__":
