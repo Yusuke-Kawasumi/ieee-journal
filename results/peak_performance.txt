@@ -3,7 +3,7 @@
 Date: 2026-05-02
 
 Device: Jetson Orin Nano
-Power Mode: MAXN
+Power Mode: 15W, ID=0, maximum available mode on this device
 Clock Setting: jetson_clocks applied
 CUDA Version: 11.4
 TensorRT Version: 8.5.2
