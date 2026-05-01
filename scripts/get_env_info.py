@@ -85,6 +85,17 @@ def parse_tegrastats(tegrastats_str: str) -> dict:
 
     return parsed
 
+def get_onnx_version():
+    try:
+        import onnx
+        return onnx.__version__
+    except Exception as e:
+        return f"Error/Not Found: {str(e)}"    
+
+
+def get_jetson_clocks_status():
+    return get_sys_info("sudo jetson_clocks --show", timeout=10)
+
 
 def is_max_performance_mode(mode_id: str) -> bool:
     return mode_id.strip() == "0"
@@ -146,11 +157,13 @@ def log_environment():
         "Torch CUDA available": str(torch.cuda.is_available()),
         "Torch CUDA version": str(torch.version.cuda),
         "TensorRT": get_sys_info("dpkg -l | grep nvinfer | awk '{print $3}' | head -n 1"),
-        
+        "ONNX": get_onnx_version(),
+
         # --- Power mode ---
         "Power Mode Name": power_name,
         "Power Mode ID": power_id,
         "Power Mode Raw": power_mode_raw,
+        "jetson_clocks status": get_jetson_clocks_status(),
 
         # --- GPU status ---
         "GPU Temperature C": gpu_stat_parsed.get("GPU Temperature C", "Unknown"),
