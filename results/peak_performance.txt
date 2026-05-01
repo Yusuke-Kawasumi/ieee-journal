@@ -9,6 +9,10 @@ CUDA Version: 11.4
 TensorRT Version: 8.5.2
 PyTorch Version: 1.13.0a0+d0d6b1f2.nv22.10
 
+GPU Temperature at start: ~42°C
+GPU Temperature during measurement: below 50°C (no thermal throttling observed)
+（測定中も50°C未満で推移し、サーマルスロットリングは発生していない）
+
 ============================================================
 1. Effective Peak FP32 FLOPS
 ============================================================
@@ -104,6 +108,10 @@ Final adopted values:
 
 - Both FP32 peak performance and DRAM bandwidth were measured on the target Jetson Orin Nano device.
 - FP32 performance was measured using cuBLAS SGEMM, not a theoretical specification value.
-- DRAM bandwidth was measured using device-to-device cudaMemcpy with cudaMalloc-allocated buffers.
-- The measured Ridge Point is higher than the specification-based estimate because the measured FP32 performance was high and the measured DRAM bandwidth was lower than the nominal bandwidth.
+- - DRAM bandwidth was measured using device-to-device cudaMemcpy with cudaMalloc-allocated buffers
+  to approximate the peak achievable DRAM throughput.
+（DRAM帯域は device-to-device の cudaMemcpy により測定し、実効的な最大到達帯域を近似している）
+- - The measured Ridge Point is significantly higher than the specification-based estimate,
+  highlighting the importance of using empirically measured peak performance rather than nominal specifications.
+（実測リッジポイントは仕様値ベースより大きく、公称値ではなく実測値に基づく評価の重要性を示している）
 - These measured values will be used for the roofline analysis.
