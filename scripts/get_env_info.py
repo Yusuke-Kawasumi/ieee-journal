@@ -27,15 +27,18 @@ def get_sys_info(cmd, timeout=5):
         return f"Error/Not Found: {str(e)}"
 
 
-def is_maxn_mode(power_mode: str) -> bool:
-    text = power_mode.lower()
+# --- nvpmodel パース ---
+def parse_power_mode(power_mode_str: str):
+    lines = power_mode_str.splitlines()
 
-    return (
-        "maxn" in text
-        or "mode 0" in text
-        or "mode: 0" in text
-        or "id: 0" in text
-    )
+    name = lines[0] if len(lines) > 0 else "Unknown"
+    mode_id = lines[1] if len(lines) > 1 else "Unknown"
+
+    return name, mode_id
+
+
+def is_max_performance_mode(mode_id: str) -> bool:
+    return mode_id.strip() == "0"
 
 
 def make_report_text(info: dict) -> str:
@@ -80,7 +83,8 @@ def log_environment():
     )
 
     # 要望により sudo パスワード待ち問題は一旦無視
-    power_mode = get_sys_info("sudo nvpmodel -q", timeout=20)
+    power_mode_raw = get_sys_info("sudo nvpmodel -q", timeout=20)
+    power_name, power_id = parse_power_mode(power_mode_raw)
 
     info = {
         "Timestamp": timestamp,
@@ -91,7 +95,12 @@ def log_environment():
         "Torch CUDA available": str(torch.cuda.is_available()),
         "Torch CUDA version": str(torch.version.cuda),
         "TensorRT": get_sys_info("dpkg -l | grep nvinfer | awk '{print $3}' | head -n 1"),
-        "Power Mode": power_mode,
+        
+        # --- Power mode ---
+        "Power Mode Name": power_name,
+        "Power Mode ID": power_id,
+        "Power Mode Raw": power_mode_raw,
+
         "GPU Status (tegrastats)": gpu_stat,
     }
 
@@ -101,9 +110,10 @@ def log_environment():
 
     saved_path = save_report(report_text, timestamp_for_file)
 
-    if not is_maxn_mode(power_mode):
-        print("[WARNING] Power mode may not be MAXN")
-        print("          If needed, run: sudo nvpmodel -m 0")
+    # --- 最大性能モードチェック ---
+    if not is_max_performance_mode(power_id):
+        print("[WARNING] Not in maximum performance mode.")
+        print("          Expected: ID=0 (15W on this device)")
 
     if saved_path is not None:
         print(f"Environment info saved to: {saved_path}")
