@@ -1,3 +1,4 @@
+/*
 # 実行上の注意点
 # コンパイル時パスを設定したのちにコンパイル
 # export PATH=/usr/local/cuda-11.4/bin:$PATH
@@ -5,6 +6,7 @@
 # もう一度パスの設定をして実行
 # export LD_LIBRARY_PATH=/usr/local/cuda-11.4/lib64:$LD_LIBRARY_PATH
 # ./measure_fp32_gflops_cublas
+*/
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
