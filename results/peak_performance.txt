@@ -1,0 +1,109 @@
+=== Jetson Orin Nano Peak Performance Measurement ===
+
+Date: 2026-05-02
+
+Device: Jetson Orin Nano
+Power Mode: MAXN
+Clock Setting: jetson_clocks applied
+CUDA Version: 11.4
+TensorRT Version: 8.5.2
+PyTorch Version: 1.13.0a0+d0d6b1f2.nv22.10
+
+============================================================
+1. Effective Peak FP32 FLOPS
+============================================================
+
+Method:
+  cuBLAS cublasSgemm
+
+Matrix Size:
+  M = 4096
+  N = 4096
+  K = 4096
+
+Precision:
+  FP32
+
+Warmup:
+  10 iterations
+
+Measurement:
+  100 iterations
+
+Timing:
+  CUDA Event
+
+FLOPs per iteration:
+  2 * M * N * K
+  = 2 * 4096 * 4096 * 4096
+  = 137,438,953,472 FLOPs
+
+Result:
+  Mean elapsed time = 164.75 ms
+  Std elapsed time  = 0.03 ms
+
+  Mean FP32 performance = 834.23 GFLOPS
+  Std FP32 performance  = 0.17 GFLOPS
+
+Output files:
+  peak_fp32_cublas_result.txt
+  peak_fp32_cublas_iterations.csv
+
+============================================================
+2. Effective Peak DRAM Bandwidth
+============================================================
+
+Method:
+  cudaMemcpy DeviceToDevice
+
+Memory Allocation:
+  cudaMalloc
+
+Buffer Size:
+  512 MB
+
+Warmup:
+  5 iterations
+
+Measurement:
+  20 iterations
+
+Timing:
+  CUDA Event
+
+Result:
+  Mean elapsed time = 20.83 ms
+  Std elapsed time  = 0.05 ms
+
+  Mean DRAM bandwidth = 25.77 GB/s
+  Std DRAM bandwidth  = 0.06 GB/s
+
+Output files:
+  peak_dram_bandwidth_result.txt
+  peak_dram_bandwidth_iterations.csv
+
+============================================================
+3. Ridge Point
+============================================================
+
+Ridge Point:
+  Effective Peak FP32 FLOPS / Effective Peak DRAM Bandwidth
+
+Calculation:
+  834.23 GFLOPS / 25.77 GB/s
+  = 32.37 FLOPs/byte
+
+Final adopted values:
+  Effective Peak FP32 FLOPS = 834.23 ± 0.17 GFLOPS
+  Effective Peak DRAM Bandwidth = 25.77 ± 0.06 GB/s
+  Ridge Point = 32.37 FLOPs/byte
+
+============================================================
+4. Notes
+============================================================
+
+- Both FP32 peak performance and DRAM bandwidth were measured on the target Jetson Orin Nano device.
+- FP32 performance was measured using cuBLAS SGEMM, not a theoretical specification value.
+- DRAM bandwidth was measured using device-to-device cudaMemcpy with cudaMalloc-allocated buffers.
+- The measured Ridge Point is higher than the specification-based estimate because the measured FP32 performance was high and the measured DRAM bandwidth was lower than the nominal bandwidth.
+- These measured values will be used for the roofline analysis.
