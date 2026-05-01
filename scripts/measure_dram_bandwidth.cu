@@ -1,4 +1,4 @@
-'''
+/*
 # 以下のパスを設定（bashで実行すればいいよ）
 # export PATH=/usr/local/cuda-11.4/bin:$PATH
 # export LD_LIBRARY_PATH=/usr/local/cuda-11.4/lib64:$LD_LIBRARY_PATH
@@ -6,7 +6,7 @@
 # nvcc -O3 measure_dram_bandwidth.cu -o measure_dram_bandwidth
 # 実行
 # ./measure_dram_bandwidth
-'''
+*/
 
 #include <cuda_runtime.h>
 
