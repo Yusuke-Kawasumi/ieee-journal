@@ -10,7 +10,7 @@ import re
 # "print"   : 標準出力のみ。動作確認用
 # "append"  : env_log.txt に追記
 # "newfile" : タイムスタンプ付きファイルを新規作成
-SAVE_MODE = "print"
+SAVE_MODE = "append"
 
 LOG_FILE = "env_log.txt"
 
@@ -203,6 +203,7 @@ def log_environment():
         "Power Mode Raw": power_mode_raw,
         
         # --- jetson clocks ---
+        # [注意] CurrentFreq はアイドル値であり、論文に使えないよ！
         "GPU MinFreq": clock_parsed.get("GPU MinFreq", "Unknown"),
         "GPU MaxFreq": clock_parsed.get("GPU MaxFreq", "Unknown"),
         "GPU CurrentFreq": clock_parsed.get("GPU CurrentFreq", "Unknown"),
