@@ -4,6 +4,7 @@
 import torch
 import subprocess
 from datetime import datetime
+import re
 
 # 保存モード:
 # "print"   : 標準出力のみ。動作確認用
@@ -35,6 +36,54 @@ def parse_power_mode(power_mode_str: str):
     mode_id = lines[1] if len(lines) > 1 else "Unknown"
 
     return name, mode_id
+
+# --- tegrastats パース ---
+def parse_tegrastats(tegrastats_str: str) -> dict:
+    parsed = {}
+
+    # RAM 1915/7451MB
+    m = re.search(r"RAM\s+(\d+)/(\d+)MB", tegrastats_str)
+    if m:
+        parsed["RAM Used MB"] = m.group(1)
+        parsed["RAM Total MB"] = m.group(2)
+
+    # SWAP 0/3726MB
+    m = re.search(r"SWAP\s+(\d+)/(\d+)MB", tegrastats_str)
+    if m:
+        parsed["SWAP Used MB"] = m.group(1)
+        parsed["SWAP Total MB"] = m.group(2)
+
+    # CPU [0%@883, ...]
+    m = re.search(r"CPU\s+\[([^\]]+)\]", tegrastats_str)
+    if m:
+        parsed["CPU Status"] = m.group(1)
+
+    # EMC_FREQ 0%
+    m = re.search(r"EMC_FREQ\s+(\d+)%", tegrastats_str)
+    if m:
+        parsed["EMC Utilization %"] = m.group(1)
+
+    # GR3D_FREQ 0%@[0]
+    m = re.search(r"GR3D_FREQ\s+(\d+)%", tegrastats_str)
+    if m:
+        parsed["GPU Utilization %"] = m.group(1)
+
+    # GPU@41.437C
+    m = re.search(r"GPU@([-\d.]+)C", tegrastats_str)
+    if m:
+        parsed["GPU Temperature C"] = m.group(1)
+
+    # CPU@42.437C
+    m = re.search(r"CPU@([-\d.]+)C", tegrastats_str)
+    if m:
+        parsed["CPU Temperature C"] = m.group(1)
+
+    # tj@42.437C
+    m = re.search(r"tj@([-\d.]+)C", tegrastats_str)
+    if m:
+        parsed["Thermal Junction Temperature C"] = m.group(1)
+
+    return parsed
 
 
 def is_max_performance_mode(mode_id: str) -> bool:
@@ -77,10 +126,12 @@ def log_environment():
     timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
     timestamp_for_file = now.strftime("%Y%m%d_%H%M%S")
 
-    gpu_stat = get_sys_info(
+    gpu_stat_raw = get_sys_info(
         "timeout 2s tegrastats --interval 1000 | head -n 1",
         timeout=4,
     )
+
+    gpu_stat_parsed = parse_tegrastats(gpu_stat_raw)
 
     # 要望により sudo パスワード待ち問題は一旦無視
     power_mode_raw = get_sys_info("sudo nvpmodel -q", timeout=20)
@@ -101,7 +152,18 @@ def log_environment():
         "Power Mode ID": power_id,
         "Power Mode Raw": power_mode_raw,
 
-        "GPU Status (tegrastats)": gpu_stat,
+        # --- GPU status ---
+        "GPU Temperature C": gpu_stat_parsed.get("GPU Temperature C", "Unknown"),
+        "CPU Temperature C": gpu_stat_parsed.get("CPU Temperature C", "Unknown"),
+        "Thermal Junction Temperature C": gpu_stat_parsed.get("Thermal Junction Temperature C", "Unknown"),
+        "GPU Utilization %": gpu_stat_parsed.get("GPU Utilization %", "Unknown"),
+        "EMC Utilization %": gpu_stat_parsed.get("EMC Utilization %", "Unknown"),
+        "RAM Used MB": gpu_stat_parsed.get("RAM Used MB", "Unknown"),
+        "RAM Total MB": gpu_stat_parsed.get("RAM Total MB", "Unknown"),
+        "SWAP Used MB": gpu_stat_parsed.get("SWAP Used MB", "Unknown"),
+        "SWAP Total MB": gpu_stat_parsed.get("SWAP Total MB", "Unknown"),
+
+        "GPU Status Raw": gpu_stat_raw,
     }
 
     report_text = make_report_text(info)
