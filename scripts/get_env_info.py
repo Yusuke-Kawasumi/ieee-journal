@@ -85,6 +85,41 @@ def parse_tegrastats(tegrastats_str: str) -> dict:
 
     return parsed
 
+
+# --- jetson_clocks パース ---
+def parse_jetson_clocks(clock_str: str) -> dict:
+    import re
+
+    parsed = {}
+
+    # GPU
+    m = re.search(r"GPU MinFreq=(\d+) MaxFreq=(\d+) CurrentFreq=(\d+)", clock_str)
+    if m:
+        parsed["GPU MinFreq"] = m.group(1)
+        parsed["GPU MaxFreq"] = m.group(2)
+        parsed["GPU CurrentFreq"] = m.group(3)
+
+    # EMC
+    m = re.search(r"EMC MinFreq=(\d+) MaxFreq=(\d+) CurrentFreq=(\d+)", clock_str)
+    if m:
+        parsed["EMC MinFreq"] = m.group(1)
+        parsed["EMC MaxFreq"] = m.group(2)
+        parsed["EMC CurrentFreq"] = m.group(3)
+
+    # CPU (cpu0だけ代表として取得)
+    m = re.search(r"cpu0:.*MaxFreq=(\d+).*CurrentFreq=(\d+)", clock_str)
+    if m:
+        parsed["CPU MaxFreq"] = m.group(1)
+        parsed["CPU CurrentFreq"] = m.group(2)
+
+    # Power mode再確認
+    m = re.search(r"NV Power Mode:\s*(.+)", clock_str)
+    if m:
+        parsed["Power Mode (clock)"] = m.group(1)
+
+    return parsed
+
+
 def get_onnx_version():
     try:
         import onnx
@@ -148,6 +183,9 @@ def log_environment():
     power_mode_raw = get_sys_info("sudo nvpmodel -q", timeout=20)
     power_name, power_id = parse_power_mode(power_mode_raw)
 
+    clock_raw = get_sys_info("sudo jetson_clocks --show", timeout=10)
+    clock_parsed = parse_jetson_clocks(clock_raw)
+
     info = {
         "Timestamp": timestamp,
         "JetPack": get_sys_info("cat /etc/nv_tegra_release"),
@@ -163,7 +201,19 @@ def log_environment():
         "Power Mode Name": power_name,
         "Power Mode ID": power_id,
         "Power Mode Raw": power_mode_raw,
-        "jetson_clocks status": get_jetson_clocks_status(),
+        
+        # --- jetson clocks ---
+        "GPU MinFreq": clock_parsed.get("GPU MinFreq", "Unknown"),
+        "GPU MaxFreq": clock_parsed.get("GPU MaxFreq", "Unknown"),
+        "GPU CurrentFreq": clock_parsed.get("GPU CurrentFreq", "Unknown"),
+
+        "EMC MaxFreq": clock_parsed.get("EMC MaxFreq", "Unknown"),
+        "EMC CurrentFreq": clock_parsed.get("EMC CurrentFreq", "Unknown"),
+
+        "CPU MaxFreq": clock_parsed.get("CPU MaxFreq", "Unknown"),
+        "CPU CurrentFreq": clock_parsed.get("CPU CurrentFreq", "Unknown"),
+
+        "jetson_clocks Raw": clock_raw,
 
         # --- GPU status ---
         "GPU Temperature C": gpu_stat_parsed.get("GPU Temperature C", "Unknown"),
